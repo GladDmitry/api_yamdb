@@ -62,5 +62,6 @@ class CustomUser(AbstractUser):
     @property
     def is_admin(self):
         return self.role == self.ADMIN
-    
+
+
 User = get_user_model()
