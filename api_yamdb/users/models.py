@@ -1,3 +1,4 @@
+from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
 
@@ -61,3 +62,5 @@ class CustomUser(AbstractUser):
     @property
     def is_admin(self):
         return self.role == self.ADMIN
+    
+User = get_user_model()
