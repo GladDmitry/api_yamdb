@@ -40,3 +40,8 @@ class AuthTokenViewSet(viewsets.ViewSet):
             raise serializers.ValidationError('Неправильный код подтверждения')
         refresh = RefreshToken.for_user(user)
         return Response({'token': str(refresh.access_token)}, status=status.HTTP_200_OK)
+
+
+class UsersViewSet(viewsets.ModelViewSet):
+    queryset = CustomUser.objects.all()
+    pass
