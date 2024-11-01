@@ -84,3 +84,7 @@ class TitleViewSet(viewsets.ModelViewSet):
             return TitleReadSerializer
         return TitleWriteSerializer
 
+class UsersViewSet(viewsets.ModelViewSet):
+    queryset = CustomUser.objects.all()
+    pass
+
