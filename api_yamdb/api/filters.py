@@ -12,3 +12,4 @@ class FilterTitle(FilterSet):
     class Meta:
         model = Title
         fields = '__all__'
+

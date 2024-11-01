@@ -5,6 +5,8 @@ from django.core.validators import EmailValidator
 from .utils import generate_confirmation_code
 
 from reviews.models import Category, Genre, Title
+from reviews.validators import validate_title_year
+
 
 class SignUpSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(validators=[EmailValidator])

@@ -11,3 +11,4 @@ class IsAdminUserOrReadOnly(permissions.BasePermission):
 
 class IsAdminModeratorAuthorOrReadOnly(permissions.BasePermission):
     pass
+
