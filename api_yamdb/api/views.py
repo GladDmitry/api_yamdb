@@ -40,3 +40,40 @@ class AuthTokenViewSet(viewsets.ViewSet):
             raise serializers.ValidationError('Неправильный код подтверждения')
         refresh = RefreshToken.for_user(user)
         return Response({'token': str(refresh.access_token)}, status=status.HTTP_200_OK)
+<<<<<<< HEAD
+=======
+
+
+class CategoryViewSet(ModelMixinSet):
+    queryset = Category.objects.all()
+    serializer_class = CategorySerializer
+    permission_classes = (IsAdminUserOrReadOnly,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+    lookup_field = 'slug'
+
+
+class GenreViewSet(ModelMixinSet):
+    queryset = Genre.objects.all()
+    serializer_class = GenreSerializer
+    permission_classes = (IsAdminUserOrReadOnly,)
+    filter_backends = (filters.SearchFilter,)
+    search_fields = ('name',)
+    lookup_field = 'slug'
+
+
+class TitleViewSet(viewsets.ModelViewSet):
+    queryset = Title.objects.annotate(
+        rating=Avg('reviews__score')
+    ).all()
+    permission_classes = (IsAdminUserOrReadOnly,)
+    filter_backends = (DjangoFilterBackend,)
+    filterset_class = FilterTitle
+    http_method_names = ['get', 'post', 'patch', 'delete',]
+
+    def get_serializer_class(self):
+        if self.action in ('list', 'retrieve'):
+            return TitleReadSerializer
+        return TitleWriteSerializer
+
+>>>>>>> feature/models-views-endpoints-csv

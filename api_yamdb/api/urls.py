@@ -11,3 +11,4 @@ urlpatterns = [
     path("v1/auth/token/", AuthTokenViewSet.as_view({'post': 'create'}), name='token_obtain_pair'),
     path("v1/", include(router.urls)),
 ]
+
