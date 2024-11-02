@@ -1,12 +1,12 @@
 from django.conf import settings
 from django.core.mail import send_mail
+from django.core.validators import EmailValidator
 from django.forms import ValidationError
+from django.contrib.auth.tokens import default_token_generator
 from rest_framework import serializers
 from users.models import CustomUser
-from django.core.validators import EmailValidator
-from django.contrib.auth.tokens import default_token_generator
-
-from reviews.models import Category, Genre, Title
+from .utils import generate_confirmation_code
+from reviews.models import Category, Comment, Genre, Review, Title
 from reviews.validators import validate_title_year
 from users.models import User
 
@@ -121,6 +121,32 @@ class TitleWriteSerializer(serializers.ModelSerializer):
         return validate_title_year(value)
 
 
+class ReviewSerializer(serializers.ModelSerializer):
+    title = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field="name"
+    )
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field="username"
+    )
+
+    class Meta:
+        model = Review
+        fields = ("id", "text", "author", "score", "pub_date")
+
+
+class CommentSerializer(serializers.ModelSerializer):
+    author = serializers.SlugRelatedField(
+        read_only=True,
+        slug_field="username"
+    )
+
+    class Meta:
+        model = Comment
+        fields = ("id", "text", "author", "pub_date")
+        
+        
 class UserSerializer(serializers.ModelSerializer):
     class Meta:
         model = User
