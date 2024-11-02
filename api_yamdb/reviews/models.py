@@ -1,5 +1,6 @@
 from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
+from django.contrib.auth import get_user_model
 
 from reviews.validators import validate_title_year
 from users.models import CustomUser
@@ -120,7 +121,7 @@ class Review(models.Model):
         related_name="reviews",
         verbose_name="Произведение",
     )
-    text = models.IntegerField(
+    text = models.TextField(
         verbose_name="Текст отзыва",
         help_text="Напишите текст обзора",
     )
@@ -152,7 +153,7 @@ class Review(models.Model):
                 fields=["author", "title"], name="unique_review")]
 
     def __str__(self):
-        return self.text
+        return self.text[:20]
 
 
 class Comment(models.Model):
@@ -183,4 +184,4 @@ class Comment(models.Model):
         verbose_name_plural = "Комментарии"
 
     def __str__(self):
-        return self.text
+        return self.text[:20]
