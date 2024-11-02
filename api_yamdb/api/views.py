@@ -67,9 +67,9 @@ class GenreViewSet(ModelMixinSet):
 
 
 class TitleViewSet(viewsets.ModelViewSet):
-    # queryset = Title.objects.annotate(
-    #     rating=Avg('reviews__score')
-    # ).all()
+    #    queryset = Title.objects.annotate(
+    #        rating=Avg('reviews__score')
+    #    ).all()
     permission_classes = (IsAdminUserOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = FilterTitle
@@ -109,3 +109,4 @@ class UsersViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
+          
