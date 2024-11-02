@@ -1,49 +1,78 @@
+from django.conf import settings
 from django.core.mail import send_mail
+from django.forms import ValidationError
 from rest_framework import serializers
 from users.models import CustomUser
 from django.core.validators import EmailValidator
-from .utils import generate_confirmation_code
+from django.contrib.auth.tokens import default_token_generator
 
 from reviews.models import Category, Genre, Title
 from reviews.validators import validate_title_year
+from users.models import User
 
 
 class SignUpSerializer(serializers.ModelSerializer):
     email = serializers.EmailField(validators=[EmailValidator])
+    username = serializers.RegexField(r'^[\w.@+-]{1,150}$')
 
     class Meta:
-        model = CustomUser
-        fields = ('email', 'username')
+        model = User
+        fields = ("email", "username")
+
+    def validate(self, data):
+        if data['username'].lower() == settings.NOT_ALLOWED_USERNAME:
+            raise ValidationError('Использование имени пользователя "me" запрещено')
+
+            # Проверка, существует ли пользователь с таким username и email
+        if not User.objects.filter(username=data['username'], email=data['email']):
+            # Проверка на уникальность username
+            if User.objects.filter(username=data['username']).exists():
+                raise serializers.ValidationError("Пользователь с таким username уже существует.")
+
+            # Проверка на уникальность email
+            if User.objects.filter(email=data['email']).exists():
+                raise serializers.ValidationError("Пользователь с таким email уже существует.")
+
+        return data
 
     def create(self, validated_data):
-        user = CustomUser.objects.create_user(**validated_data)
-        confirmation_code = generate_confirmation_code()
-        user.confirmation_code = confirmation_code
-        user.save()
+        email = validated_data['email']
+        username = validated_data['username']
+        user, created = User.objects.get_or_create(username=username, email=email)
+        if created:
+            # Если пользователь создан, генерируем новый код подтверждения
+            user.confirmation_code = default_token_generator.make_token(user)
+            user.save()
+        else:
+            # Если пользователь уже существует, обновляем код подтверждения
+            user.confirmation_code = default_token_generator.make_token(user)
+            user.save(update_fields=['confirmation_code'])
+        # Отправляем код подтверждения на почту
         send_mail(
             'Код подтверждения',
-            f'Ваш код подтверждения: {confirmation_code}',
-            from_email=None,
-            recipient_list=[user.email],
+            f'Ваш код подтверждения: {user.confirmation_code}',
+            settings.DEFAULT_FROM_EMAIL,
+            [email],
             fail_silently=False,
         )
+
         return user
 
 
 class AuthTokenSerializer(serializers.Serializer):
     username = serializers.CharField(max_length=150)
-    confirmation_code = serializers.CharField(max_length=16)
+    confirmation_code = serializers.CharField(max_length=50)
 
-    def validate(self, attrs):
-        username = attrs['username']
-        confirmation_code = attrs['confirmation_code']
+    def validate(self, data):
+        username = data['username']
+        confirmation_code = data['confirmation_code']
         try:
             user = CustomUser.objects.get(username=username)
         except CustomUser.DoesNotExist:
             raise serializers.ValidationError('Пользователь не найден')
         if user.confirmation_code != confirmation_code:
             raise serializers.ValidationError('Неправильный код подтверждения')
-        return attrs
+        return data
 
 
 class GenreSerializer(serializers.ModelSerializer):
@@ -90,3 +119,33 @@ class TitleWriteSerializer(serializers.ModelSerializer):
 
     def validate_year(self, value):
         return validate_title_year(value)
+
+
+class UserSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'first_name', 'last_name', 'bio', 'role')
+        extra_kwargs = {
+            'username': {'required': True, 'allow_blank': False},
+            'email': {'required': True, 'allow_blank': False},
+        }
+
+    def validate_username(self, value):
+        if User.objects.filter(username=value).exists():
+            raise serializers.ValidationError("Пользователь с таким username уже существует.")
+        return value
+
+    def validate_email(self, value):
+        if User.objects.filter(email=value).exists():
+            raise serializers.ValidationError("Пользователь с таким email уже существует.")
+        return value
+
+
+class UserMeSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = User
+        fields = ('username', 'email', 'first_name', 'last_name', 'bio')
+        extra_kwargs = {
+            'username': {'allow_blank': False},
+            'email': {'allow_blank': False},
+        }

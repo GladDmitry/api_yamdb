@@ -1,6 +1,7 @@
 from django.db import models
 
 from reviews.validators import validate_title_year
+from django.contrib.auth import get_user_model
 
 
 class Category(models.Model):
@@ -110,3 +111,5 @@ class GenreTitle(models.Model):
     def __str__(self):
         return f'{self.title} {self.genre}'
 
+
+User = get_user_model()

@@ -40,14 +40,13 @@ class CustomUser(AbstractUser):
     confirmation_code = models.CharField(
         blank=True,
         verbose_name="Код подтверждения",
-        max_length=10,
+        max_length=50,
     )
 
     class Meta:
         verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи"
         ordering = ("-id",)
-        unique_together = ("username", "email")
 
     def __str__(self):
         return self.username
