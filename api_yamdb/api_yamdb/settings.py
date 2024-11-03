@@ -23,10 +23,10 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "rest_framework",
     "rest_framework_simplejwt",
-    'django_filters',
+    "django_filters",
     "users",
     "api",
-    'reviews',
+    "reviews",
 ]
 
 MIDDLEWARE = [
@@ -124,4 +124,5 @@ SIMPLE_JWT = {
     "AUTH_HEADER_TYPES": ("Bearer",),
 }
 
-NOT_ALLOWED_USERNAME = 'me'
+NOT_ALLOWED_USERNAME = "me"
+CUSTOM_PAGE_SIZE = 10

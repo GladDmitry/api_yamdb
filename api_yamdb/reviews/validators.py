@@ -7,4 +7,3 @@ def validate_title_year(value):
     if not (value <= year):
         raise ValidationError('Некоректный год.')
     return value
-
