@@ -15,6 +15,14 @@ class CustomUser(AbstractUser):
         (MODERATOR, "Модератор"),
         (ADMIN, "Админ"),
     )
+
+    username = models.CharField(
+        max_length=150,
+        unique=True,
+        verbose_name="Имя пользователя",
+        help_text="Введите имя пользователя (максимум 150 символов)."
+    )
+
     role = models.CharField(
         max_length=13,
         choices=CHOICES,
@@ -24,7 +32,6 @@ class CustomUser(AbstractUser):
     )
 
     bio = models.TextField(
-        max_length=200,
         blank=True,
         verbose_name="Биография пользователя",
         help_text="Напишите информацию о себе",
@@ -35,6 +42,7 @@ class CustomUser(AbstractUser):
         unique=True,
         verbose_name="Электронная почту пользователя",
         help_text="Введите свою почту",
+        max_length=254,
     )
 
     confirmation_code = models.CharField(
