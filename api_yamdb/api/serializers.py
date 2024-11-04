@@ -2,14 +2,13 @@ from django.conf import settings
 from django.core.mail import send_mail
 from django.core.validators import EmailValidator
 from django.contrib.auth.tokens import default_token_generator
+from django.utils.translation import gettext as _
 from rest_framework import serializers
 from rest_framework.exceptions import NotFound
-from django.utils.translation import gettext as _
 
-from users.models import CustomUser
 from reviews.models import Category, Comment, Genre, Review, Title
 from reviews.validators import validate_title_year
-from users.models import User
+from users.models import CustomUser, User
 
 
 class SignUpSerializer(serializers.ModelSerializer):

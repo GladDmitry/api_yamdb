@@ -1,8 +1,6 @@
 from rest_framework import viewsets, status, filters
 from rest_framework.response import Response
 from rest_framework.permissions import AllowAny
-from users.models import CustomUser
-from .serializers import SignUpSerializer, AuthTokenSerializer
 from django.db.models import Avg
 from django_filters.rest_framework import DjangoFilterBackend
 from django.shortcuts import get_object_or_404
@@ -18,11 +16,14 @@ from api.permissions import (IsAdminUserOrReadOnly,
                              IsAuthenticatedUser)
 from api.serializers import (AuthTokenSerializer, CategorySerializer,
                              CommentSerializer, GenreSerializer,
-                             SignUpSerializer, ReviewSerializer,
+                             ReviewSerializer, SignUpSerializer,
                              TitleReadSerializer, TitleWriteSerializer,
                              UserMeSerializer, UserSerializer)
+
 from reviews.models import Category, Genre, Review, Title
+from users.models import CustomUser
 from .pagination import CustomPageNumberPagination
+from .serializers import SignUpSerializer, AuthTokenSerializer
 
 
 class SignUpView(APIView):
@@ -91,7 +92,7 @@ class GenreViewSet(ModelMixinSet):
 class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.annotate(
         rating=Avg('reviews__score')
-    ).all()
+    ).order_by('id')
     permission_classes = (IsAdminUserOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = FilterTitle
