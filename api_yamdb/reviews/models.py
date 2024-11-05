@@ -113,34 +113,39 @@ class GenreTitle(models.Model):
         return f'{self.title} {self.genre}'
 
 
-class Review(models.Model):
+class BaseReviewComment(models.Model):
+    text = models.TextField(
+        verbose_name="Текст",
+        help_text="Напишите текст",
+    )
+    author = models.ForeignKey(
+        CustomUser,
+        on_delete=models.CASCADE,
+        verbose_name="Автор",
+    )
+    pub_date = models.DateTimeField(
+        auto_now_add=True,
+        verbose_name="Дата публикации",
+    )
+
+    class Meta:
+        abstract = True
+
+
+class Review(BaseReviewComment):
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
         related_name="reviews",
         verbose_name="Произведение",
     )
-    text = models.TextField(
-        verbose_name="Текст отзыва",
-        help_text="Напишите текст обзора",
-    )
-    author = models.ForeignKey(
-        CustomUser,
-        on_delete=models.CASCADE,
-        related_name="reviews",
-        verbose_name="Автор отзыва",
-    )
-    score = models.IntegerField(
+    score = models.PositiveSmallIntegerField(
         verbose_name="Рейтинг",
         help_text="Укажите рейтинг от 1 до 10",
         validators=[
             MinValueValidator(1),
             MaxValueValidator(10)
         ]
-    )
-    pub_date = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="Дата публикации",
     )
 
     class Meta:
@@ -155,26 +160,12 @@ class Review(models.Model):
         return self.text[:20]
 
 
-class Comment(models.Model):
+class Comment(BaseReviewComment):
     review = models.ForeignKey(
         Review,
         on_delete=models.CASCADE,
         related_name="comments",
         verbose_name="Отзыв",
-    )
-    text = models.TextField(
-        verbose_name="Текст комментария",
-        help_text="Напишите текст комментария",
-    )
-    author = models.ForeignKey(
-        CustomUser,
-        on_delete=models.CASCADE,
-        related_name="comments",
-        verbose_name="Автор комментария",
-    )
-    pub_date = models.DateTimeField(
-        auto_now_add=True,
-        verbose_name="Дата публикации",
     )
 
     class Meta:
