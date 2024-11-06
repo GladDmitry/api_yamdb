@@ -3,17 +3,17 @@ from rest_framework import permissions
 MESSAGE_NO_PERMISSION = "У вас нет прав для выполнения этого действия."
 
 
-class IsAdminOrSuperUser(permissions.BasePermission):
+class IsAuthenticatedAdminOrStaff(permissions.BasePermission):
     """
-    Разрешение, которое позволяет доступ только администраторам.
+    Разрешение, которое предоставляет доступ
+    только аутентифицированным пользователям,
+    которые являются администраторами или суперпользователями.
     """
     message = MESSAGE_NO_PERMISSION
 
     def has_permission(self, request, view):
         if request.user.is_authenticated:
-            return (request.user.is_admin
-                    or request.user.is_superuser
-                    or request.user.is_staff)
+            return request.user.is_admin
         return False
 
 
@@ -49,10 +49,10 @@ class IsAdminModeratorAuthorOrReadOnly(permissions.BasePermission):
         )
 
 
-class IsAuthenticatedUser (permissions.BasePermission):
+class IsOwner(permissions.BasePermission):
     """
-    Разрешение, которое позволяет доступ только
-    аутентифицированным пользователям.
+    Разрешение, которое позволяет получить доступ только
+    владельцам.
     """
     message = MESSAGE_NO_PERMISSION
 
@@ -62,4 +62,4 @@ class IsAuthenticatedUser (permissions.BasePermission):
 
     def has_object_permission(self, request, view, obj):
         # Разрешить доступ к объекту только для владельца
-        return obj == request.user
+        return obj.username == request.user.username

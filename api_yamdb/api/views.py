@@ -8,22 +8,26 @@ from rest_framework_simplejwt.tokens import RefreshToken
 from rest_framework.views import APIView
 from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
+from django.conf import settings
+from django.core.mail import send_mail
+from django.db import IntegrityError
+
 from api.filters import FilterTitle
 from api.mixins import ModelMixinSet
 from api.permissions import (IsAdminUserOrReadOnly,
-                             IsAdminOrSuperUser,
+                             IsAuthenticatedAdminOrStaff,
                              IsAdminModeratorAuthorOrReadOnly,
-                             IsAuthenticatedUser)
+                             IsOwner)
 from api.serializers import (AuthTokenSerializer, CategorySerializer,
                              CommentSerializer, GenreSerializer,
                              ReviewSerializer, SignUpSerializer,
                              TitleReadSerializer, TitleWriteSerializer,
-                             UserMeSerializer, UserSerializer)
+                             UserSerializer)
 
 from reviews.models import Category, Genre, Review, Title
-from users.models import CustomUser
 from .pagination import CustomPageNumberPagination
 from .serializers import SignUpSerializer, AuthTokenSerializer
+from users.models import User, UserProfile
 
 
 class SignUpView(APIView):
@@ -39,9 +43,26 @@ class SignUpView(APIView):
         Создает нового пользователя на основе переданных данных.
         В случае успеха возвращает email и имя пользователя.
         """
-        serializer = self.serializer_class(data=request.data)
-        serializer.is_valid(raise_exception=True)
-        user = serializer.save()
+        username = request.data.get('username')
+        email = request.data.get('email')
+
+        user = User.objects.filter(username=username, email=email).first()
+
+        if user is None:
+            serializer = self.serializer_class(data=request.data)
+            serializer.is_valid(raise_exception=True)
+            user = serializer.save()
+
+        confirmation_code = user.confirmation_code
+
+        send_mail(
+            'Код подтверждения',
+            f'Ваш код подтверждения: {confirmation_code}',
+            settings.DEFAULT_FROM_EMAIL,
+            [user.email],
+            fail_silently=False,
+        )
+
         return Response(
             {'email': user.email, 'username': user.username},
             status=status.HTTP_200_OK
@@ -109,32 +130,14 @@ class UsersViewSet(viewsets.ModelViewSet):
     Представление для работы с пользователями.
     Доступно для администраторов и для аутентифицированных пользователей.
     """
-    queryset = CustomUser.objects.all()
+    queryset = UserProfile.objects.all()
     lookup_field = 'username'
     filter_backends = [SearchFilter]
     search_fields = ['username']
     pagination_class = CustomPageNumberPagination
     http_method_names = ('get', 'post', 'patch', 'delete',)
-
-    def get_permissions(self):
-        """
-        Возвращает разрешения для действий в зависимости от типа запроса.
-        Для действия 'me' требуется аутентификация,
-        для остальных - административные права.
-        """
-        if self.action == 'me':
-            return [IsAuthenticatedUser()]
-        return [IsAdminOrSuperUser()]
-
-    def get_serializer_class(self):
-        """
-        Возвращает соответствующий сериализатор в зависимости от действия.
-        Для действия 'me' используется UserMeSerializer,
-        для остальных - UserSerializer.
-        """
-        if self.action == 'me':
-            return UserMeSerializer
-        return UserSerializer
+    permission_classes = [IsAuthenticatedAdminOrStaff]
+    serializer_class = UserSerializer
 
     def create(self, request, *args, **kwargs):
         """
@@ -142,14 +145,34 @@ class UsersViewSet(viewsets.ModelViewSet):
         В случае успеха возвращает данные созданного пользователя.
         """
         serializer = self.get_serializer(data=request.data)
+        try:
+            serializer.is_valid(raise_exception=True)
+            self.perform_create(serializer)
+            return Response(serializer.data, status=status.HTTP_201_CREATED)
+        except IntegrityError:
+            return Response(
+                {"detail": "Пользователь с таким email или username"
+                 "уже существует."},
+                status=status.HTTP_400_BAD_REQUEST
+            )
+
+    def update(self, request, *args, **kwargs):
+        """
+        Обновляет данные пользователя.
+        """
+        partial = kwargs.pop('partial', False)
+        instance = self.get_object()
+        serializer = self.get_serializer(
+            instance, data=request.data, partial=partial
+        )
         serializer.is_valid(raise_exception=True)
-        self.perform_create(serializer)
-        return Response(serializer.data, status=status.HTTP_201_CREATED)
+        self.perform_update(serializer)
+        return Response(serializer.data)
 
     @action(detail=False,
             methods=['get', 'post', 'patch',
                      'delete', 'put', 'options', 'head'],
-            permission_classes=[IsAuthenticatedUser])
+            permission_classes=[IsOwner])
     def me(self, request):
         """
         Позволяет пользователю получить или обновить свои данные.
@@ -160,8 +183,10 @@ class UsersViewSet(viewsets.ModelViewSet):
             serializer = self.get_serializer(user)
             return Response(serializer.data)
         elif request.method == 'PATCH':
+            data = request.data.copy()
+            data.pop('role', None)
             serializer = self.get_serializer(
-                user, data=request.data, partial=True
+                user, data=data, partial=True
             )
             serializer.is_valid(raise_exception=True)
             serializer.save()

@@ -2,7 +2,7 @@ import csv
 
 from django.core.management.base import BaseCommand, CommandError
 from reviews.models import Category, Comment, Genre, Review, Title
-from users.models import CustomUser
+from users.models import UserProfile
 
 
 CSV_PATH = 'static/data/'
@@ -10,7 +10,7 @@ CSV_PATH = 'static/data/'
 FOREIGN_KEY_FIELDS = ('category', 'author')
 
 DICT = {
-    CustomUser: 'users.csv',
+    UserProfile: 'users.csv',
     Genre: 'genre.csv',
     Category: 'category.csv',
     Title: 'titles.csv',

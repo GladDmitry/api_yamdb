@@ -1,32 +1,46 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
+from django.core.validators import RegexValidator
+from django.core.exceptions import ValidationError
+from django.conf import settings
+from django.contrib.auth.tokens import default_token_generator
+
+from .constants import (
+    MAX_USERNAME_LENGTH,
+    MAX_EMAIL_LENGTH,
+    USER_ROLE,
+    MODERATOR_ROLE,
+    ADMIN_ROLE,
+    ROLE_CHOICES,
+    MAX_ROLE_LENGTH
+)
 
 
-class CustomUser(AbstractUser):
+class UserProfile(AbstractUser):
     """Модель пользователя"""
 
-    USER = "user"
-    MODERATOR = "moderator"
-    ADMIN = "admin"
-
-    CHOICES = (
-        (USER, "Аутентифицированный пользователь"),
-        (MODERATOR, "Модератор"),
-        (ADMIN, "Админ"),
+    username_validator = RegexValidator(
+        regex=r'^[\w.@+-]+$',
+        message=(
+            'Имя пользователя может содержать только буквы, цифры и символы: '
+            '_, @, +, ., -'
+        ),
+        code='invalid_username'
     )
 
     username = models.CharField(
-        max_length=150,
+        max_length=MAX_USERNAME_LENGTH,
         unique=True,
         verbose_name="Имя пользователя",
-        help_text="Введите имя пользователя (максимум 150 символов)."
+        help_text="Введите имя пользователя (максимум 150 символов).",
+        validators=[username_validator]
     )
 
     role = models.CharField(
-        max_length=13,
-        choices=CHOICES,
-        default="user",
+        max_length=MAX_ROLE_LENGTH,
+        choices=ROLE_CHOICES,
+        default=USER_ROLE,
         verbose_name="Уровень доступа пользователя",
         help_text="Уровень доступа пользователя",
     )
@@ -42,34 +56,39 @@ class CustomUser(AbstractUser):
         unique=True,
         verbose_name="Электронная почту пользователя",
         help_text="Введите свою почту",
-        max_length=254,
-    )
-
-    confirmation_code = models.CharField(
-        blank=True,
-        verbose_name="Код подтверждения",
-        max_length=50,
+        max_length=MAX_EMAIL_LENGTH,
     )
 
     class Meta:
         verbose_name = "Пользователь"
         verbose_name_plural = "Пользователи"
-        ordering = ("-id",)
+        ordering = ("username",)
 
     def __str__(self):
         return self.username
 
     @property
-    def is_user(self):
-        return self.role == self.USER
-
-    @property
     def is_moderator(self):
-        return self.role == self.MODERATOR
+        return self.role == MODERATOR_ROLE
 
     @property
     def is_admin(self):
-        return self.role == self.ADMIN
+        return self.role == ADMIN_ROLE or self.is_superuser or self.is_staff
+
+    @property
+    def confirmation_code(self):
+        return default_token_generator.make_token(self)
+
+    def verify_confirmation_code(self, token):
+        return default_token_generator.check_token(self, token)
+
+    def clean(self):
+        super().clean()
+        if self.username.lower() == settings.NOT_ALLOWED_USERNAME:
+            raise ValidationError(
+                'Использование имени'
+                'пользователя "me" запрещено'
+            )
 
 
 User = get_user_model()
