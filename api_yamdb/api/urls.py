@@ -11,17 +11,18 @@ from api.views import (
     TitleViewSet,
     UsersViewSet,
 )
+from api_yamdb.settings import API_VERSION
 
 
-router = DefaultRouter()
-router.register("categories", CategoryViewSet, basename="categories")
-router.register("genres", GenreViewSet, basename="genres")
-router.register("titles", TitleViewSet, basename="titles")
-router.register(r"users", UsersViewSet)
-router.register(r"titles/(?P<title_id>\d+)/reviews",
-                ReviewViewSet,
-                basename="reviews")
-router.register(
+router_v1 = DefaultRouter()
+router_v1.register("categories", CategoryViewSet, basename="categories")
+router_v1.register("genres", GenreViewSet, basename="genres")
+router_v1.register("titles", TitleViewSet, basename="titles")
+router_v1.register(r"users", UsersViewSet)
+router_v1.register(r"titles/(?P<title_id>\d+)/reviews",
+                   ReviewViewSet,
+                   basename="reviews")
+router_v1.register(
     r"titles/(?P<title_id>\d+)/reviews/(?P<review_id>\d+)/comments",
     CommentsViewSet,
     basename="comments",
@@ -29,7 +30,9 @@ router.register(
 
 
 urlpatterns = [
-    path("v1/auth/signup/", SignUpView.as_view(), name="signup"),
-    path("v1/auth/token/", AuthTokenView.as_view(), name="token_obtain_pair"),
-    path("v1/", include(router.urls)),
+    path(f'{API_VERSION}/auth/signup/', SignUpView.as_view(), name="signup"),
+    path(f'{API_VERSION}/auth/token/',
+         AuthTokenView.as_view(),
+         name="token_obtain_pair"),
+    path(f'{API_VERSION}/', include(router_v1.urls)),
 ]
