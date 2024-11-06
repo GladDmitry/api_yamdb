@@ -2,7 +2,7 @@ from django.core.validators import MaxValueValidator, MinValueValidator
 from django.db import models
 
 from reviews.validators import validate_title_year
-from users.models import CustomUser
+from users.models import UserProfile
 
 
 class Category(models.Model):
@@ -119,7 +119,7 @@ class BaseReviewComment(models.Model):
         help_text="Напишите текст",
     )
     author = models.ForeignKey(
-        CustomUser,
+        UserProfile,
         on_delete=models.CASCADE,
         verbose_name="Автор",
     )
