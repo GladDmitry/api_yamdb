@@ -5,7 +5,9 @@ from reviews.validators import validate_title_year
 from users.models import CustomUser
 
 
-class Category(models.Model):
+class InfoModel(models.Model):
+    """Абстрактная модель."""
+
     name = models.CharField(
         max_length=256,
         verbose_name='Название',
@@ -19,6 +21,16 @@ class Category(models.Model):
     )
 
     class Meta:
+        abstract = True
+
+    def __str__(self):
+        return self.name
+
+
+class Category(InfoModel):
+    """Модель категории."""
+
+    class Meta:
         ordering = ('name',)
         verbose_name = 'Категория'
         verbose_name_plural = 'Категории'
@@ -27,18 +39,8 @@ class Category(models.Model):
         return self.name
 
 
-class Genre(models.Model):
-    name = models.CharField(
-        max_length=256,
-        verbose_name='Название',
-        help_text='Необходимо названия жанра',
-    )
-    slug = models.SlugField(
-        max_length=50,
-        unique=True,
-        verbose_name='Идентификатор',
-        help_text='Необходим индификатор жанра',
-    )
+class Genre(InfoModel):
+    """Модель жанра."""
 
     class Meta:
         ordering = ('name',)
@@ -50,6 +52,8 @@ class Genre(models.Model):
 
 
 class Title(models.Model):
+    """Модель произведения."""
+
     name = models.CharField(
         max_length=256,
         verbose_name='Название',
@@ -63,7 +67,7 @@ class Title(models.Model):
         help_text='Необходимо описание',
     )
 
-    year = models.IntegerField(
+    year = models.PositiveSmallIntegerField(
         verbose_name='Дата выхода',
         help_text='Укажите дату выхода',
         validators=(validate_title_year,)
@@ -98,15 +102,11 @@ class GenreTitle(models.Model):
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
-        verbose_name='Произведение',
-        help_text='Необходимо произведение',
     )
 
     genre = models.ForeignKey(
         Genre,
         on_delete=models.CASCADE,
-        verbose_name='Жанр',
-        help_text='Необходим жанр',
     )
 
     def __str__(self):
