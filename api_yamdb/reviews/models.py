@@ -3,13 +3,14 @@ from django.db import models
 
 from reviews.validators import validate_title_year
 from users.models import UserProfile
+from reviews.constants import MAX_NAME_LENGTH
 
 
 class InfoModel(models.Model):
     """Абстрактная модель."""
 
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_NAME_LENGTH,
         verbose_name='Название',
         help_text='Необходимо названия котегории'
     )
@@ -55,7 +56,7 @@ class Title(models.Model):
     """Модель произведения."""
 
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_NAME_LENGTH,
         verbose_name='Название',
         help_text='Необходимо названия произведения',
     )
@@ -67,7 +68,7 @@ class Title(models.Model):
         help_text='Необходимо описание',
     )
 
-    year = models.PositiveSmallIntegerField(
+    year = models.SmallIntegerField(
         verbose_name='Дата выхода',
         help_text='Укажите дату выхода',
         validators=(validate_title_year,)
@@ -98,7 +99,10 @@ class Title(models.Model):
         return self.name
 
 
+# Модель не лишняя, без неё падают тесты
 class GenreTitle(models.Model):
+    """Вспомогательный класс, связывающий жанры и произведения."""
+
     title = models.ForeignKey(
         Title,
         on_delete=models.CASCADE,
@@ -109,8 +113,13 @@ class GenreTitle(models.Model):
         on_delete=models.CASCADE,
     )
 
+    class Meta:
+        verbose_name = 'Соответствие жанра и произведения'
+        verbose_name_plural = 'Таблица соответствия жанров и произведений'
+        ordering = ('id',)
+
     def __str__(self):
-        return f'{self.title} {self.genre}'
+        return f'{self.title} принадлежит жанру/ам {self.genre}'
 
 
 class BaseReviewComment(models.Model):
