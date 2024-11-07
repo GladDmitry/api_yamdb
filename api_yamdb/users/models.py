@@ -1,10 +1,10 @@
 from django.contrib.auth import get_user_model
 from django.contrib.auth.models import AbstractUser
 from django.db import models
-from django.core.validators import RegexValidator
 from django.core.exceptions import ValidationError
 from django.conf import settings
 from django.contrib.auth.tokens import default_token_generator
+from django.contrib.auth.validators import UnicodeUsernameValidator
 
 from .constants import (
     MAX_USERNAME_LENGTH,
@@ -13,28 +13,26 @@ from .constants import (
     MODERATOR_ROLE,
     ADMIN_ROLE,
     ROLE_CHOICES,
-    MAX_ROLE_LENGTH
+    MAX_ROLE_LENGTH,
 )
+
+
+def validate_username(value):
+    if value.lower() == settings.NOT_ALLOWED_USERNAME:
+        raise ValidationError(
+            "Использование имени пользователя 'me' запрещено."
+        )
 
 
 class UserProfile(AbstractUser):
     """Модель пользователя"""
-
-    username_validator = RegexValidator(
-        regex=r'^[\w.@+-]+$',
-        message=(
-            'Имя пользователя может содержать только буквы, цифры и символы: '
-            '_, @, +, ., -'
-        ),
-        code='invalid_username'
-    )
 
     username = models.CharField(
         max_length=MAX_USERNAME_LENGTH,
         unique=True,
         verbose_name="Имя пользователя",
         help_text="Введите имя пользователя (максимум 150 символов).",
-        validators=[username_validator]
+        validators=[UnicodeUsernameValidator(), validate_username],
     )
 
     role = models.CharField(
@@ -52,7 +50,6 @@ class UserProfile(AbstractUser):
     )
 
     email = models.EmailField(
-        blank=False,
         unique=True,
         verbose_name="Электронная почту пользователя",
         help_text="Введите свою почту",
@@ -81,14 +78,6 @@ class UserProfile(AbstractUser):
 
     def verify_confirmation_code(self, token):
         return default_token_generator.check_token(self, token)
-
-    def clean(self):
-        super().clean()
-        if self.username.lower() == settings.NOT_ALLOWED_USERNAME:
-            raise ValidationError(
-                'Использование имени'
-                'пользователя "me" запрещено'
-            )
 
 
 User = get_user_model()

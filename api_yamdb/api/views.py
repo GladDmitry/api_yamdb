@@ -14,7 +14,7 @@ from django.db import IntegrityError
 
 from api.filters import FilterTitle
 from api.mixins import ModelMixinSet
-from api.permissions import (IsAdminUserOrReadOnly,
+from api.permissions import (IsAuthenticatedAdminOrReadOnly,
                              IsAuthenticatedAdminOrStaff,
                              IsAdminModeratorAuthorOrReadOnly,
                              IsOwner)
@@ -43,18 +43,10 @@ class SignUpView(APIView):
         Создает нового пользователя на основе переданных данных.
         В случае успеха возвращает email и имя пользователя.
         """
-        username = request.data.get('username')
-        email = request.data.get('email')
-
-        user = User.objects.filter(username=username, email=email).first()
-
-        if user is None:
-            serializer = self.serializer_class(data=request.data)
-            serializer.is_valid(raise_exception=True)
-            user = serializer.save()
-
+        serializer = self.serializer_class(data=request.data)
+        serializer.is_valid(raise_exception=True)
+        user = serializer.save()
         confirmation_code = user.confirmation_code
-
         send_mail(
             'Код подтверждения',
             f'Ваш код подтверждения: {confirmation_code}',
@@ -62,7 +54,6 @@ class SignUpView(APIView):
             [user.email],
             fail_silently=False,
         )
-
         return Response(
             {'email': user.email, 'username': user.username},
             status=status.HTTP_200_OK
@@ -95,7 +86,7 @@ class AuthTokenView(APIView):
 class CategoryViewSet(ModelMixinSet):
     queryset = Category.objects.all()
     serializer_class = CategorySerializer
-    permission_classes = (IsAdminUserOrReadOnly,)
+    permission_classes = (IsAuthenticatedAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -104,7 +95,7 @@ class CategoryViewSet(ModelMixinSet):
 class GenreViewSet(ModelMixinSet):
     queryset = Genre.objects.all()
     serializer_class = GenreSerializer
-    permission_classes = (IsAdminUserOrReadOnly,)
+    permission_classes = (IsAuthenticatedAdminOrReadOnly,)
     filter_backends = (filters.SearchFilter,)
     search_fields = ('name',)
     lookup_field = 'slug'
@@ -114,7 +105,7 @@ class TitleViewSet(viewsets.ModelViewSet):
     queryset = Title.objects.annotate(
         rating=Avg('reviews__score')
     ).order_by('id')
-    permission_classes = (IsAdminUserOrReadOnly,)
+    permission_classes = (IsAuthenticatedAdminOrReadOnly,)
     filter_backends = (DjangoFilterBackend,)
     filterset_class = FilterTitle
     http_method_names = ['get', 'post', 'patch', 'delete', ]
@@ -138,36 +129,6 @@ class UsersViewSet(viewsets.ModelViewSet):
     http_method_names = ('get', 'post', 'patch', 'delete',)
     permission_classes = [IsAuthenticatedAdminOrStaff]
     serializer_class = UserSerializer
-
-    def create(self, request, *args, **kwargs):
-        """
-        Создает нового пользователя на основе переданных данных.
-        В случае успеха возвращает данные созданного пользователя.
-        """
-        serializer = self.get_serializer(data=request.data)
-        try:
-            serializer.is_valid(raise_exception=True)
-            self.perform_create(serializer)
-            return Response(serializer.data, status=status.HTTP_201_CREATED)
-        except IntegrityError:
-            return Response(
-                {"detail": "Пользователь с таким email или username"
-                 "уже существует."},
-                status=status.HTTP_400_BAD_REQUEST
-            )
-
-    def update(self, request, *args, **kwargs):
-        """
-        Обновляет данные пользователя.
-        """
-        partial = kwargs.pop('partial', False)
-        instance = self.get_object()
-        serializer = self.get_serializer(
-            instance, data=request.data, partial=partial
-        )
-        serializer.is_valid(raise_exception=True)
-        self.perform_update(serializer)
-        return Response(serializer.data)
 
     @action(detail=False,
             methods=['get', 'post', 'patch',

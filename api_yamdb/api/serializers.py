@@ -3,10 +3,11 @@ from django.core.validators import EmailValidator
 from django.utils.translation import gettext as _
 from rest_framework import serializers
 from django.shortcuts import get_object_or_404
+from django.db import IntegrityError
 
 from reviews.models import Category, Comment, Genre, Review, Title
 from reviews.validators import validate_title_year
-from users.models import UserProfile, User
+from users.models import UserProfile, User, validate_username
 
 
 class SignUpSerializer(serializers.Serializer):
@@ -19,40 +20,23 @@ class SignUpSerializer(serializers.Serializer):
     email = serializers.EmailField(
         required=True, max_length=254, validators=[EmailValidator()]
     )
-    username = serializers.RegexField(r"^[\w.@+-]{1,150}$", required=True)
-
-    def validate_username(self, value):
-        """
-        Проверяет, что имя пользователя не запрещено и не существует.
-        """
-        if value.lower() == settings.NOT_ALLOWED_USERNAME:
-            raise serializers.ValidationError(
-                _('Использование имени пользователя "me" запрещено')
-            )
-        if User.objects.filter(username=value).exists():
-            raise serializers.ValidationError(
-                _("Пользователь с таким username уже существует.")
-            )
-        return value
-
-    def validate_email(self, value):
-        """
-        Проверяет, что email не существует.
-        """
-        if User.objects.filter(email=value).exists():
-            raise serializers.ValidationError(
-                _("Пользователь с таким email уже существует.")
-            )
-        return value
+    username = serializers.RegexField(
+        r"^[\w.@+-]{1,150}$", required=True, validators=[validate_username]
+    )
 
     def create(self, validated_data):
         """
-        Создает и возвращает новый объект пользователя.
+        Создает нового пользователя или возвращает существующего.
+        Отправляет код подтверждения на email.
         """
-        user = User.objects.create(
-            email=validated_data["email"], username=validated_data["username"]
-        )
-        return user
+        try:
+            user, created = UserProfile.objects.get_or_create(
+                email=validated_data["email"],
+                username=validated_data["username"]
+            )
+            return user
+        except IntegrityError as e:
+            raise serializers.ValidationError({"detail": str(e)})
 
 
 class AuthTokenSerializer(serializers.Serializer):
@@ -174,7 +158,9 @@ class UserSerializer(serializers.ModelSerializer):
         max_length=254,
         validators=[EmailValidator()]
     )
-    username = serializers.RegexField(r"^[\w.@+-]{1,150}$", required=True)
+    username = serializers.RegexField(
+        r"^[\w.@+-]{1,150}$", required=True, validators=[validate_username]
+    )
 
     class Meta:
         model = User
@@ -186,3 +172,9 @@ class UserSerializer(serializers.ModelSerializer):
             "username": {"required": True, "allow_blank": False},
             "email": {"required": True, "allow_blank": False},
         }
+
+    def create(self, validated_data):
+        try:
+            return super().create(validated_data)
+        except IntegrityError as e:
+            raise serializers.ValidationError({"detail": str(e)})
