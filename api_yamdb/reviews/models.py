@@ -3,13 +3,14 @@ from django.db import models
 
 from reviews.validators import validate_title_year
 from users.models import UserProfile
+from reviews.constants import MAX_NAME_LENGTH
 
 
 class InfoModel(models.Model):
     """Абстрактная модель."""
 
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_NAME_LENGTH,
         verbose_name='Название',
         help_text='Необходимо названия котегории'
     )
@@ -55,7 +56,7 @@ class Title(models.Model):
     """Модель произведения."""
 
     name = models.CharField(
-        max_length=256,
+        max_length=MAX_NAME_LENGTH,
         verbose_name='Название',
         help_text='Необходимо названия произведения',
     )
@@ -67,7 +68,7 @@ class Title(models.Model):
         help_text='Необходимо описание',
     )
 
-    year = models.PositiveSmallIntegerField(
+    year = models.SmallIntegerField(
         verbose_name='Дата выхода',
         help_text='Укажите дату выхода',
         validators=(validate_title_year,)
@@ -84,7 +85,6 @@ class Title(models.Model):
 
     genre = models.ManyToManyField(
         Genre,
-        through='GenreTitle',
         verbose_name='Жанр',
         help_text='Укажите жанр',
     )
@@ -96,21 +96,6 @@ class Title(models.Model):
 
     def __str__(self):
         return self.name
-
-
-class GenreTitle(models.Model):
-    title = models.ForeignKey(
-        Title,
-        on_delete=models.CASCADE,
-    )
-
-    genre = models.ForeignKey(
-        Genre,
-        on_delete=models.CASCADE,
-    )
-
-    def __str__(self):
-        return f'{self.title} {self.genre}'
 
 
 class BaseReviewComment(models.Model):
