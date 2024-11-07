@@ -9,7 +9,7 @@ CSV_PATH = 'static/data/'
 
 FOREIGN_KEY_FIELDS = ('category', 'author')
 
-DICT = {
+FILES = {
     UserProfile: 'users.csv',
     Genre: 'genre.csv',
     Category: 'category.csv',
@@ -35,23 +35,23 @@ class Command(BaseCommand):
     def load_csv(self, model):
         try:
             with open(
-                CSV_PATH + DICT[model],
+                CSV_PATH + FILES[model],
                 newline='',
                 encoding='utf8'
             ) as csv_file:
-                self.csv_serializer(csv.DictReader(csv_file), model)
+                self.csv_serializer(csv.FILESReader(csv_file), model)
             self.stdout.write(self.style.SUCCESS(
                 f'Файл {model} успешно загружен.'))
         except Exception as error:
             CommandError(error)
         self.stdout.write(
             self.style.SUCCESS(
-                f"Данные из файла {DICT[model]} успешно занесены в БД"
+                f"Данные из файла {FILES[model]} успешно занесены в БД"
             )
         )
 
     def handle(self, *args, **kwargs):
-        for model in DICT:
+        for model in FILES:
             self.load_csv(model)
         self.stdout.write(self.style.SUCCESS(
             'Все файлы успешно загружены в базу данных.'))
