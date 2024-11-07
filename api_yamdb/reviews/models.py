@@ -85,7 +85,6 @@ class Title(models.Model):
 
     genre = models.ManyToManyField(
         Genre,
-        through='GenreTitle',
         verbose_name='Жанр',
         help_text='Укажите жанр',
     )
@@ -97,29 +96,6 @@ class Title(models.Model):
 
     def __str__(self):
         return self.name
-
-
-# Модель не лишняя, без неё падают тесты
-class GenreTitle(models.Model):
-    """Вспомогательный класс, связывающий жанры и произведения."""
-
-    title = models.ForeignKey(
-        Title,
-        on_delete=models.CASCADE,
-    )
-
-    genre = models.ForeignKey(
-        Genre,
-        on_delete=models.CASCADE,
-    )
-
-    class Meta:
-        verbose_name = 'Соответствие жанра и произведения'
-        verbose_name_plural = 'Таблица соответствия жанров и произведений'
-        ordering = ('id',)
-
-    def __str__(self):
-        return f'{self.title} принадлежит жанру/ам {self.genre}'
 
 
 class BaseReviewComment(models.Model):
