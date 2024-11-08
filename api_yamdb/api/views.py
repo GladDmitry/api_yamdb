@@ -10,7 +10,6 @@ from rest_framework.decorators import action
 from rest_framework.filters import SearchFilter
 from django.conf import settings
 from django.core.mail import send_mail
-from django.db import IntegrityError
 
 from api.filters import FilterTitle
 from api.mixins import ModelMixinSet
@@ -27,7 +26,7 @@ from api.serializers import (AuthTokenSerializer, CategorySerializer,
 from reviews.models import Category, Genre, Review, Title
 from .pagination import CustomPageNumberPagination
 from .serializers import SignUpSerializer, AuthTokenSerializer
-from users.models import User, UserProfile
+from users.models import UserProfile
 
 
 class SignUpView(APIView):

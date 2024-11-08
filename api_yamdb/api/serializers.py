@@ -1,6 +1,4 @@
-from django.conf import settings
 from django.core.validators import EmailValidator
-from django.utils.translation import gettext as _
 from rest_framework import serializers
 from django.shortcuts import get_object_or_404
 from django.db import IntegrityError
