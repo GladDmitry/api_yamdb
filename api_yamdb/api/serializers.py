@@ -157,18 +157,6 @@ class UserSerializer(serializers.ModelSerializer):
     """
     Сериализатор для представления и валидации данных пользователя.
     """
-
-    email = serializers.EmailField(
-        required=True, max_length=MAX_EMAIL_LENGTH, validators=[
-            EmailValidator()
-        ]
-    )
-    username = serializers.CharField(
-        required=True, max_length=MAX_USERNAME_LENGTH, validators=[
-            UnicodeUsernameValidator(), validate_username
-        ]
-    )
-
     class Meta:
         model = User
         fields = (
