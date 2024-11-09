@@ -3,7 +3,7 @@ from django.db import models
 
 from reviews.validators import validate_title_year
 from users.models import UserProfile
-from reviews.constants import MAX_NAME_LENGTH
+from reviews.constants import MAX_NAME_LENGTH, MAX_SLUG_LENGTH, SELF_DESCRIPTION_LENGTH
 
 
 class InfoModel(models.Model):
@@ -15,7 +15,7 @@ class InfoModel(models.Model):
         help_text='Необходимо названия котегории'
     )
     slug = models.SlugField(
-        max_length=50,
+        max_length=MAX_SLUG_LENGTH,
         unique=True,
         verbose_name='Индификатор',
         help_text='Необходим индификатор категории',
@@ -142,7 +142,7 @@ class Review(BaseReviewComment):
                 fields=["author", "title"], name="unique_review")]
 
     def __str__(self):
-        return self.text[:20]
+        return self.text[:SELF_DESCRIPTION_LENGTH]
 
 
 class Comment(BaseReviewComment):
@@ -159,4 +159,4 @@ class Comment(BaseReviewComment):
         verbose_name_plural = "Комментарии"
 
     def __str__(self):
-        return self.text[:20]
+        return self.text[:SELF_DESCRIPTION_LENGTH]
