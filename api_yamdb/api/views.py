@@ -130,7 +130,7 @@ class UsersViewSet(viewsets.ModelViewSet):
     serializer_class = UserSerializer
 
     @action(detail=False,
-            methods=['get', 'patch',],
+            methods=['get', 'patch', ],
             permission_classes=(IsAuthOwner,))
     def me(self, request):
         """
