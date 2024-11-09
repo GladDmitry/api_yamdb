@@ -3,7 +3,8 @@ from django.db import models
 
 from reviews.validators import validate_title_year
 from users.models import UserProfile
-from reviews.constants import MAX_NAME_LENGTH, MAX_SLUG_LENGTH, SELF_DESCRIPTION_LENGTH
+from reviews.constants import (
+    MAX_NAME_LENGTH, MAX_SLUG_LENGTH, SELF_DESCRIPTION_LENGTH)
 
 
 class InfoModel(models.Model):
