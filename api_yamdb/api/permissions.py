@@ -27,7 +27,7 @@ class IsAuthenticatedAdminOrReadOnly(permissions.BasePermission):
                 or (request.user.is_authenticated and request.user.is_admin))
 
 
-class IsAdminModeratorAuthorOrReadOnly(permissions.BasePermission):
+class IsAuthAdminModeratorAuthorOrReadOnly(permissions.BasePermission):
     """
     Разрешение, которое позволяет администраторам, модераторам и авторам
     выполнять любые действия, а обычным пользователям — только чтение.
@@ -46,7 +46,7 @@ class IsAdminModeratorAuthorOrReadOnly(permissions.BasePermission):
         )
 
 
-class IsOwner(permissions.BasePermission):
+class IsAuthOwner(permissions.BasePermission):
     """
     Разрешение, которое позволяет получить доступ только
     владельцам.

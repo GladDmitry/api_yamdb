@@ -2,10 +2,12 @@ from django.core.validators import EmailValidator
 from rest_framework import serializers
 from django.shortcuts import get_object_or_404
 from django.db import IntegrityError
+from django.contrib.auth.validators import UnicodeUsernameValidator
 
 from reviews.models import Category, Comment, Genre, Review, Title
 from reviews.validators import validate_title_year
 from users.models import UserProfile, User, validate_username
+from users.constants import MAX_EMAIL_LENGTH, MAX_USERNAME_LENGTH
 
 
 class SignUpSerializer(serializers.Serializer):
@@ -16,10 +18,14 @@ class SignUpSerializer(serializers.Serializer):
     """
 
     email = serializers.EmailField(
-        required=True, max_length=254, validators=[EmailValidator()]
+        required=True, max_length=MAX_EMAIL_LENGTH, validators=[
+            EmailValidator()
+        ]
     )
-    username = serializers.RegexField(
-        r"^[\w.@+-]{1,150}$", required=True, validators=[validate_username]
+    username = serializers.CharField(
+        required=True, max_length=MAX_USERNAME_LENGTH, validators=[
+            UnicodeUsernameValidator(), validate_username
+        ]
     )
 
     def create(self, validated_data):
@@ -43,8 +49,8 @@ class AuthTokenSerializer(serializers.Serializer):
     имени пользователя и кода подтверждения.
     """
 
-    username = serializers.CharField(max_length=150)
-    confirmation_code = serializers.CharField(max_length=50)
+    username = serializers.CharField(max_length=MAX_USERNAME_LENGTH)
+    confirmation_code = serializers.CharField()
 
     def validate(self, data):
         """
@@ -153,11 +159,14 @@ class UserSerializer(serializers.ModelSerializer):
     """
 
     email = serializers.EmailField(
-        max_length=254,
-        validators=[EmailValidator()]
+        required=True, max_length=MAX_EMAIL_LENGTH, validators=[
+            EmailValidator()
+        ]
     )
-    username = serializers.RegexField(
-        r"^[\w.@+-]{1,150}$", required=True, validators=[validate_username]
+    username = serializers.CharField(
+        required=True, max_length=MAX_USERNAME_LENGTH, validators=[
+            UnicodeUsernameValidator(), validate_username
+        ]
     )
 
     class Meta:
@@ -166,13 +175,3 @@ class UserSerializer(serializers.ModelSerializer):
             "username", "email", "first_name",
             "last_name", "bio", "role"
         )
-        extra_kwargs = {
-            "username": {"required": True, "allow_blank": False},
-            "email": {"required": True, "allow_blank": False},
-        }
-
-    def create(self, validated_data):
-        try:
-            return super().create(validated_data)
-        except IntegrityError as e:
-            raise serializers.ValidationError({"detail": str(e)})

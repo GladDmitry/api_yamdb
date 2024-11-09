@@ -15,8 +15,8 @@ from api.filters import FilterTitle
 from api.mixins import ModelMixinSet
 from api.permissions import (IsAuthenticatedAdminOrReadOnly,
                              IsAuthenticatedAdminOrStaff,
-                             IsAdminModeratorAuthorOrReadOnly,
-                             IsOwner)
+                             IsAuthAdminModeratorAuthorOrReadOnly,
+                             IsAuthOwner)
 from api.serializers import (AuthTokenSerializer, CategorySerializer,
                              CommentSerializer, GenreSerializer,
                              ReviewSerializer, SignUpSerializer,
@@ -122,17 +122,16 @@ class UsersViewSet(viewsets.ModelViewSet):
     """
     queryset = UserProfile.objects.all()
     lookup_field = 'username'
-    filter_backends = [SearchFilter]
-    search_fields = ['username']
+    filter_backends = (SearchFilter,)
+    search_fields = ('username',)
     pagination_class = CustomPageNumberPagination
-    http_method_names = ('get', 'post', 'patch', 'delete',)
-    permission_classes = [IsAuthenticatedAdminOrStaff]
+    http_method_names = ('get', 'post', 'patch', 'delete')
+    permission_classes = (IsAuthenticatedAdminOrStaff,)
     serializer_class = UserSerializer
 
     @action(detail=False,
-            methods=['get', 'post', 'patch',
-                     'delete', 'put', 'options', 'head'],
-            permission_classes=[IsOwner])
+            methods=['get', 'patch',],
+            permission_classes=(IsAuthOwner,))
     def me(self, request):
         """
         Позволяет пользователю получить или обновить свои данные.
@@ -158,7 +157,7 @@ class UsersViewSet(viewsets.ModelViewSet):
 
 class ReviewViewSet(viewsets.ModelViewSet):
     serializer_class = ReviewSerializer
-    permission_classes = (IsAdminModeratorAuthorOrReadOnly,)
+    permission_classes = (IsAuthAdminModeratorAuthorOrReadOnly,)
     http_method_names = ["get", "post", "patch", "delete", ]
 
     def get_queryset(self):
@@ -177,7 +176,7 @@ class ReviewViewSet(viewsets.ModelViewSet):
 
 class CommentsViewSet(viewsets.ModelViewSet):
     serializer_class = CommentSerializer
-    permission_classes = (IsAdminModeratorAuthorOrReadOnly, )
+    permission_classes = (IsAuthAdminModeratorAuthorOrReadOnly, )
     http_method_names = ["get", "post", "patch", "delete", ]
 
     def get_permissions(self):
