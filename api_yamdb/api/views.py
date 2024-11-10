@@ -150,9 +150,6 @@ class UsersViewSet(viewsets.ModelViewSet):
             serializer.is_valid(raise_exception=True)
             serializer.save()
             return Response(serializer.data)
-        else:
-            return Response({'detail': 'Метод не разрешен.'},
-                            status=status.HTTP_405_METHOD_NOT_ALLOWED)
 
 
 class ReviewViewSet(viewsets.ModelViewSet):

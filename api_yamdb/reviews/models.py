@@ -4,7 +4,12 @@ from django.db import models
 from reviews.validators import validate_title_year
 from users.models import UserProfile
 from reviews.constants import (
-    MAX_NAME_LENGTH, MAX_SLUG_LENGTH, SELF_DESCRIPTION_LENGTH)
+    MAX_NAME_LENGTH,
+    MAX_SCORE,
+    MAX_SLUG_LENGTH,
+    MIN_SCORE,
+    SELF_DESCRIPTION_LENGTH
+)
 
 
 class InfoModel(models.Model):
@@ -129,8 +134,8 @@ class Review(BaseReviewComment):
         verbose_name="Рейтинг",
         help_text="Укажите рейтинг от 1 до 10",
         validators=[
-            MinValueValidator(1),
-            MaxValueValidator(10)
+            MinValueValidator(MIN_SCORE),
+            MaxValueValidator(MAX_SCORE)
         ]
     )
 
